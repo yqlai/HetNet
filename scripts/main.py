@@ -26,9 +26,6 @@ if __name__ == '__main__':
             age, expired_user_request = cp[id].step(update_id)
             total_age += age * expired_user_request
         arr_AAoI.append(total_age / (avg_arrival * time_slot))
-        print(update_id)
-        for i in range(num_content):
-            print(cp[i].age)
 
         if update_id > 0:
             num_update += 1
