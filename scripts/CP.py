@@ -1,4 +1,5 @@
 import numpy as np
+from ddpg import DDPG
 
 class Content_Provider:
     def __init__(self, config, id):
@@ -10,7 +11,12 @@ class Content_Provider:
 
         # Arrival rate = (id ^ -kappa) / sum(i ^ -kappa)
         self.arrival_rate = (id ** -config.config['kappa']) / sum([i ** -config.config['kappa'] for i in range(1, config.config['num_content']+1)])
+        self.arrival_rate = 0.6
         self.eta = config.config['eta']
+
+        nb_states = 1 + self.serve_offset + 1
+        nb_actions = 2
+        self.agent = DDPG(nb_states, nb_actions, config)
     
     def initialize(self):
         for i in range(self.serve_offset+1):
@@ -33,7 +39,7 @@ class Content_Provider:
         self.user_request_queue = self.user_request_queue[1:] + [self.new_arrive()]
         next_state = [self.age] + self.user_request_queue
         
-        return current_state, update_indicator, self.Lagrangian(age, expired_user_request, update_indicator)
+        return next_state, update_indicator, self.Lagrangian(age, expired_user_request, update_indicator)
     
     def new_arrive(self):
         return np.random.binomial(self.num_user, self.arrival_rate)

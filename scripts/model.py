@@ -43,7 +43,7 @@ class Critic(nn.Module):
     def __init__(self, nb_states, nb_actions, hidden1=1024, hidden2=512, hidden3=300, init_w=3e-3):
         super(Critic, self).__init__()
         self.fc1 = nn.Linear(nb_states, hidden1)
-        self.fc2 = nn.Linear(hidden1+nb_actions, hidden2)
+        self.fc2 = nn.Linear(hidden1+1, hidden2) # nn.Linear(hidden1+nb_actions, hidden2)
         self.fc3 = nn.Linear(hidden2, hidden3)
         self.fc4 = nn.Linear(hidden3, 1)
         self.relu = nn.ReLU()
@@ -57,7 +57,7 @@ class Critic(nn.Module):
     
     def forward(self, xs):
         x, a = xs
-        out = self.fc1
+        out = self.fc1(x)
         out = self.relu(out)
         out = self.fc2(torch.cat([out, a], 1))
         out = self.relu(out)

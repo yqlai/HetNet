@@ -5,8 +5,10 @@ class Macro_Base_Station:
         self.num_content = config.config['num_content']
     
     def decide(self):
-        # choose [0, 1, 2] with prob [0.8, 0.1, 0.1]
-        if np.random.rand() < 0.8:
-            return 0
+        return self.random_decide()
+    
+    def random_decide(self, update_rate: float):
+        if np.random.rand() < update_rate:
+            return 1
         else:
-            return np.random.randint(1, self.num_content+1)
+            return 0
