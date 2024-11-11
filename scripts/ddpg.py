@@ -16,17 +16,20 @@ class DDPG(object):
         self.nb_states = nb_states
         self.nb_actions = nb_actions
 
+        self.device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
+        print(f'Working on {self.device}')
+
         self.actor = Actor(self.nb_states-1, 1)
         self.actor_target = Actor(self.nb_states-1, 1)
-        self.actor_optim = Adam(self.actor.parameters(), lr=0.001)
+        self.actor_optim = Adam(self.actor.parameters(), lr=0.00001)
 
         self.critic = Critic(self.nb_states, self.nb_actions)
         self.critic_target = Critic(self.nb_states, self.nb_actions)
-        self.critic_optim = Adam(self.critic.parameters(), lr=0.001)
+        self.critic_optim = Adam(self.critic.parameters(), lr=0.00001)
 
         hard_update(self.actor_target, self.actor)
         hard_update(self.critic_target, self.critic)
-
+ 
         self.memory = SequentialMemory(limit=1000000, window_length=1)
         self.random_process = OrnsteinUhlenbeckProcess(size=nb_actions, theta=0.15, mu=0, sigma=0.01)
 
@@ -43,39 +46,38 @@ class DDPG(object):
         self.a_t = None
         self.is_training = True
 
-        if torch.cuda.is_available():
-            self.actor.cuda()
-            self.actor_target.cuda()
-            self.critic.cuda()
-            self.critic_target.cuda()
+        self.actor.to(self.device)
+        self.actor_target.to(self.device)
+        self.critic.to(self.device)
+        self.critic_target.to(self.device)
     
     def update_policy(self):
         state_batch, action_batch, Lagrangian_batch, next_state_batch, _ = self.memory.sample_and_split(self.batch_size)
         
         next_q_values = self.critic_target([
-            to_tensor(next_state_batch, volatile=True),
-            self.actor_target(to_tensor(next_state_batch[:, 1:], volatile=True))
+            to_tensor(next_state_batch, volatile=True, device=self.device),
+            self.actor_target(to_tensor(next_state_batch[:, 1:], volatile=True, device=self.device))
         ])
         next_q_values.volatile = False
         ref_values = self.critic_target([
-            to_tensor(self.ref_state_batch, volatile=True),
-            self.actor_target(to_tensor(self.ref_state_batch[:, 1:], volatile=True))
+            to_tensor(self.ref_state_batch, volatile=True, device=self.device),
+            self.actor_target(to_tensor(self.ref_state_batch[:, 1:], volatile=True, device=self.device))
         ])
         ref_values.volatile = False
 
-        target_q_batch = to_tensor(Lagrangian_batch) + next_q_values - ref_values
+        target_q_batch = to_tensor(Lagrangian_batch, device=self.device) + next_q_values - ref_values
 
         self.critic.zero_grad()
-        q_batch = self.critic([to_tensor(state_batch), to_tensor(action_batch)])
+        q_batch = self.critic([to_tensor(state_batch, device=self.device), to_tensor(action_batch, device=self.device)])
 
         value_loss = criterion(q_batch, target_q_batch)
         value_loss.backward()
         self.critic_optim.step()
 
         self.actor.zero_grad()
-        policy_loss = -self.critic([
-            to_tensor(state_batch),
-            self.actor(to_tensor(state_batch[:, 1:]))
+        policy_loss = self.critic([
+            to_tensor(state_batch, device=self.device),
+            self.actor(to_tensor(state_batch[:, 1:], device=self.device))
         ])
 
         policy_loss = policy_loss.mean()
@@ -117,7 +119,7 @@ class DDPG(object):
         if decay_epsilon:
             self.epsilon -= self.depsilon
         
-        return action
+        return action, threshold
 
     def reset(self, s_t):
         self.s_t = s_t

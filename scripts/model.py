@@ -31,11 +31,17 @@ class Actor(nn.Module):
     def forward(self, x):
         out = self.fc1(x)
         out = self.relu(out)
+        out_first = out
         out = self.fc2(out)
         out = self.relu(out)
+        out_second = out
         out = self.fc3(out)
         out = self.tanh(out)
+        out_tanh = out
         out = out * 25 + 25
+
+        # print(f'Out_First: {out_first}, Out_Second: {out_second}, Out_Tanh: {out_tanh}, Out: {out}')
+
         return out
 
 
@@ -62,4 +68,6 @@ class Critic(nn.Module):
         out = self.fc2(torch.cat([out, a], 1))
         out = self.relu(out)
         out = self.fc3(out)
+        out = self.relu(out)
+        out = self.fc4(out)
         return out
