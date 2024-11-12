@@ -1,3 +1,4 @@
+import time
 import numpy as np
 import torch
 import torch.nn as nn
@@ -8,6 +9,8 @@ from utils import *
 from ddpg import DDPG
 
 def train(mbs:Macro_Base_Station, arr_cp:list[Content_Provider], config):
+    print('Start training...')
+    start_time = time.time()
     device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
     sum_AoI = 0
     arr_AAoI = []
@@ -28,10 +31,14 @@ def train(mbs:Macro_Base_Station, arr_cp:list[Content_Provider], config):
 
             current_state = [cp.age] + cp.user_request_queue
             if episode > 0 or episode_slot > config.config['warmup']:
-                update_flag, threshold = cp.agent.select_action(current_state, False)
+                update_flag, actions = cp.agent.select_action(current_state, False)
+                threshold = torch.argmax(actions).item() + 1
                 episode_threshold += threshold
             else:
-                update_flag = cp.agent.random_action()
+                update_flag, actions = cp.agent.random_action(current_state)
+                threshold = torch.argmax(to_tensor(actions)).item() + 1
+                episode_threshold += threshold
+                
             if update_flag == 0:
                 update_id = 0
             else:
@@ -55,5 +62,8 @@ def train(mbs:Macro_Base_Station, arr_cp:list[Content_Provider], config):
                 episode_lagrangian = 0
                 episode_threshold = 0
                 episode_slot = 0
+    
+    end_time = time.time()
+    print(f'Training time: {end_time - start_time} seconds')
     
     return arr_AAoI, num_update / (num_episode * num_time_slot_in_episode)

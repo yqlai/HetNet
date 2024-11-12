@@ -15,7 +15,7 @@ class Content_Provider:
         self.eta = config.config['eta']
 
         nb_states = 1 + self.serve_offset + 1
-        nb_actions = 2
+        nb_actions = config.config['max_age']
         self.agent = DDPG(nb_states, nb_actions, config)
     
     def initialize(self):

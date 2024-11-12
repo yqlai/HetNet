@@ -194,7 +194,7 @@ class SequentialMemory(Memory):
             reward_batch.append(e.reward)
             action_batch.append(e.action)
             terminal1_batch.append(0. if e.terminal1 else 1.)
-
+        
         # Prepare and validate parameters.
         state0_batch = np.array(state0_batch).reshape(batch_size,-1)
         state1_batch = np.array(state1_batch).reshape(batch_size,-1)

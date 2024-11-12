@@ -34,7 +34,7 @@ if __name__ == '__main__':
     
 
     plt.plot(range(len(arr_AAoI_ddpg)), arr_AAoI_ddpg)
-    plt.savefig('result.png')
+    plt.savefig('offset6.png')
     plt.show()
 
     print('Update rate:', update_rate)

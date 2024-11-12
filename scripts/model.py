@@ -37,9 +37,11 @@ class Actor(nn.Module):
         out_second = out
         out = self.fc3(out)
         out = self.tanh(out)
-        out_tanh = out
+        # softmax
+        out = F.softmax(out, dim=1)
+        # out_tanh = out
         # tanh: [-1:1] -> [1:50]
-        out = (out + 1) * 0.5 * 49 + 1
+        # out = (out + 1) * 0.5 * 49 + 1
 
         # print(f'Out_First: {out_first}, Out_Second: {out_second}, Out_Tanh: {out_tanh}, Out: {out}')
 
@@ -50,7 +52,7 @@ class Critic(nn.Module):
     def __init__(self, nb_states, nb_actions, hidden1=1024, hidden2=512, hidden3=300, init_w=3e-3):
         super(Critic, self).__init__()
         self.fc1 = nn.Linear(nb_states, hidden1)
-        self.fc2 = nn.Linear(hidden1+1, hidden2) # nn.Linear(hidden1+nb_actions, hidden2)
+        self.fc2 = nn.Linear(hidden1+nb_actions, hidden2) # nn.Linear(hidden1+nb_actions, hidden2)
         self.fc3 = nn.Linear(hidden2, hidden3)
         self.fc4 = nn.Linear(hidden3, 1)
         self.relu = nn.ReLU()

@@ -19,8 +19,8 @@ class DDPG(object):
         self.device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
         print(f'Working on {self.device}')
 
-        self.actor = Actor(self.nb_states-1, 1)
-        self.actor_target = Actor(self.nb_states-1, 1)
+        self.actor = Actor(self.nb_states-1, self.nb_actions)
+        self.actor_target = Actor(self.nb_states-1, self.nb_actions)
         self.actor_optim = Adam(self.actor.parameters(), lr=0.0001)
 
         self.critic = Critic(self.nb_states, self.nb_actions)
@@ -53,7 +53,7 @@ class DDPG(object):
     
     def update_policy(self):
         state_batch, action_batch, Lagrangian_batch, next_state_batch, _ = self.memory.sample_and_split(self.batch_size)
-        
+
         next_q_values = self.critic_target([
             to_tensor(next_state_batch, volatile=True, device=self.device),
             self.actor_target(to_tensor(next_state_batch[:, 1:], volatile=True, device=self.device))
@@ -106,29 +106,34 @@ class DDPG(object):
         self.s_t = s_t1
 
     # Action
-    def random_action(self):
-        action = np.random.randint(self.nb_actions)
-        self.a_t = action
-        return action
+    def random_action(self, s_t):
+        # return actions = [p1, p2, p3, ... , p50] with sum(p1, p2, p3, ... , p50) = 1
+        p = np.random.rand(self.nb_actions)
+        actions = p / sum(p)
+        threshold = np.argmax(actions) + 1
+        if s_t[0] >= threshold:
+            action = 1
+        else:
+            action = 0
+        self.a_t = actions
 
+        return action, actions
+    
     def select_action(self, s_t, decay_epsilon=True):
-        threshold = self.actor(to_tensor(np.array([s_t[1:]]).astype(np.float32))).squeeze(0)
-        if s_t[0] > threshold:
+        actions = self.actor(to_tensor(np.array([s_t[1:]]).astype(np.float32))).squeeze(0)
+        threshold = torch.argmax(actions).item() + 1
+        # threshold = self.actor(to_tensor(np.array([s_t[1:]]).astype(np.float32))).squeeze(0)
+        if s_t[0] >= threshold:
             action = 1
         else:
             action = 0
         
-        print(f'Threshold: {threshold}, Age: {s_t[0]}, Action: {action}')
-
-        # action = self.actor(to_tensor(np.array([s_t[1:]]).astype(np.float32))).squeeze(0)
-        # action += self.is_training * max(self.epsilon, 0) * self.random_process.sample()
-        # action = np.clip(action, 0, self.nb_actions)
-        self.a_t = action
+        self.a_t = actions.detach().cpu().numpy()
 
         if decay_epsilon:
             self.epsilon -= self.depsilon
         
-        return action, threshold
+        return action, actions
 
     def reset(self, s_t):
         self.s_t = s_t
