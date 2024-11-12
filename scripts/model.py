@@ -38,7 +38,8 @@ class Actor(nn.Module):
         out = self.fc3(out)
         out = self.tanh(out)
         out_tanh = out
-        out = out * 25 + 25
+        # tanh: [-1:1] -> [1:50]
+        out = (out + 1) * 0.5 * 49 + 1
 
         # print(f'Out_First: {out_first}, Out_Second: {out_second}, Out_Tanh: {out_tanh}, Out: {out}')
 

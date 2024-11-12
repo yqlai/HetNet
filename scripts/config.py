@@ -7,7 +7,7 @@ class Config:
             'num_user': 3,
             'serve_offset': 3,
             'num_time_slot_in_episode': 1000,
-            'num_episode': 200,
+            'num_episode': 20,
             'ref_state': [2, 1, 0, 1, 0],
 
             # Arrival parameters

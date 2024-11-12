@@ -21,11 +21,11 @@ class DDPG(object):
 
         self.actor = Actor(self.nb_states-1, 1)
         self.actor_target = Actor(self.nb_states-1, 1)
-        self.actor_optim = Adam(self.actor.parameters(), lr=0.00001)
+        self.actor_optim = Adam(self.actor.parameters(), lr=0.0001)
 
         self.critic = Critic(self.nb_states, self.nb_actions)
         self.critic_target = Critic(self.nb_states, self.nb_actions)
-        self.critic_optim = Adam(self.critic.parameters(), lr=0.00001)
+        self.critic_optim = Adam(self.critic.parameters(), lr=0.0001)
 
         hard_update(self.actor_target, self.actor)
         hard_update(self.critic_target, self.critic)
@@ -68,7 +68,14 @@ class DDPG(object):
         target_q_batch = to_tensor(Lagrangian_batch, device=self.device) + next_q_values - ref_values
 
         self.critic.zero_grad()
-        q_batch = self.critic([to_tensor(state_batch, device=self.device), to_tensor(action_batch, device=self.device)])
+        q_batch = self.critic([
+            to_tensor(state_batch, device=self.device),
+            to_tensor(action_batch, device=self.device)
+        ])
+        # q_batch = self.critic([
+        #     to_tensor(state_batch, device=self.device),
+        #     self.actor_target(to_tensor(state_batch[:, 1:], device=self.device))
+        # ])
 
         value_loss = criterion(q_batch, target_q_batch)
         value_loss.backward()
@@ -110,6 +117,8 @@ class DDPG(object):
             action = 1
         else:
             action = 0
+        
+        print(f'Threshold: {threshold}, Age: {s_t[0]}, Action: {action}')
 
         # action = self.actor(to_tensor(np.array([s_t[1:]]).astype(np.float32))).squeeze(0)
         # action += self.is_training * max(self.epsilon, 0) * self.random_process.sample()

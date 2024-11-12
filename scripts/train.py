@@ -27,7 +27,7 @@ def train(mbs:Macro_Base_Station, arr_cp:list[Content_Provider], config):
             arr_AAoI.append(sum_AoI / ((episode * num_time_slot_in_episode + episode_slot + 1) * cp.arrival_rate))
 
             current_state = [cp.age] + cp.user_request_queue
-            if episode > 0 and episode_slot > config.config['warmup']:
+            if episode > 0 or episode_slot > config.config['warmup']:
                 update_flag, threshold = cp.agent.select_action(current_state, False)
                 episode_threshold += threshold
             else:
