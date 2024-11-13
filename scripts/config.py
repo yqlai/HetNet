@@ -15,5 +15,8 @@ class Config:
 
             # DDPG
             'warmup':  200,
-            'eta': 15
+            'eta': 50,
+
+            # Output
+            'output_file': 'eta50.png'
         }
