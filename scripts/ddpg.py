@@ -21,11 +21,11 @@ class DDPG(object):
 
         self.actor = Actor(self.nb_states-1, self.nb_actions)
         self.actor_target = Actor(self.nb_states-1, self.nb_actions)
-        self.actor_optim = Adam(self.actor.parameters(), lr=0.0001)
+        self.actor_optim = Adam(self.actor.parameters(), lr=config.config['learning_rate'])
 
         self.critic = Critic(self.nb_states, self.nb_actions)
         self.critic_target = Critic(self.nb_states, self.nb_actions)
-        self.critic_optim = Adam(self.critic.parameters(), lr=0.0001)
+        self.critic_optim = Adam(self.critic.parameters(), lr=config.config['learning_rate'])
 
         hard_update(self.actor_target, self.actor)
         hard_update(self.critic_target, self.critic)

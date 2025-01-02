@@ -1,5 +1,6 @@
 import torch
 from torch.autograd import Variable
+import time
 
 USE_CUDA = torch.cuda.is_available()
 FLOAT = torch.cuda.FloatTensor if USE_CUDA else torch.FloatTensor
@@ -19,3 +20,15 @@ def hard_update(target, source):
 def soft_update(target, source, tau):
     for target_param, param in zip(target.parameters(), source.parameters()):
         target_param.data.copy_(target_param.data * (1.0 - tau) + param.data * tau)
+    
+def saveconfig(config, filename, update_rate):
+    with open(filename, 'w') as f:
+        # Date and Time
+        f.write('Date:%s\n' % time.strftime('%m/%d/%Y %H:%M:%S'))
+        for key, value in config.items():
+            f.write('%s:%s\n' % (key, value))
+        if type(update_rate) == list:
+            for i in update_rate:
+                f.write('Update Rate:%s\n' % i)
+        else:
+            f.write('Update Rate:%s\n' % update_rate)

@@ -6,7 +6,6 @@ import torch.nn as nn
 from MBS import Macro_Base_Station
 from CP import Content_Provider
 from utils import *
-from ddpg import DDPG
 
 def train(mbs:Macro_Base_Station, arr_cp:list[Content_Provider], config):
     print('Start training...')
@@ -25,11 +24,12 @@ def train(mbs:Macro_Base_Station, arr_cp:list[Content_Provider], config):
         num_time_slot_in_episode = config.config['num_time_slot_in_episode'] # 1000
         episode_lagrangian = 0
         episode_threshold = 0
+
         while episode < num_episode:
             sum_AoI += cp.age * cp.user_request_queue[0]
             arr_AAoI.append(sum_AoI / ((episode * num_time_slot_in_episode + episode_slot + 1) * cp.arrival_rate))
 
-            current_state = [cp.age] + cp.user_request_queue
+            current_state = [cp.age] + cp.user_request_queue + [cp.num_update/max(cp.num_time_slot, 1)]
             if episode > 0 or episode_slot > config.config['warmup']:
                 update_flag, actions = cp.agent.select_action(current_state, False)
                 threshold = torch.argmax(actions).item() + 1

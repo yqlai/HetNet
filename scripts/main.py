@@ -2,6 +2,7 @@ from config import Config
 from MBS import Macro_Base_Station
 from CP import Content_Provider
 from train import train
+from utils import saveconfig
 
 import matplotlib.pyplot as plt
 
@@ -20,22 +21,36 @@ def random_method(mbs: Macro_Base_Station, arr_cp:Content_Provider, config, upda
         time_slot += 1
 
 
-
-
 if __name__ == '__main__':
     config = Config()
 
     num_content = config.config['num_content']
 
     mbs = Macro_Base_Station(config)
-    cp = [Content_Provider(config, i) for i in range(1, num_content+1)]
+    arr_cp = [Content_Provider(config, i) for i in range(1, num_content+1)]
 
-    arr_AAoI_ddpg, update_rate = train(mbs, cp, config)
-    
+    arr_AAoI_ddpg, update_rate = train(mbs, arr_cp, config)
+
+    mbs = Macro_Base_Station(config)
+    arr_cp = [Content_Provider(config, i) for i in range(1, num_content+1)]
+    # config.config['update_rate_upper_bound'] = 0.15
+    arr_AAoI_tmp, update_rate_tmp = train(mbs, arr_cp, config)
 
     plt.plot(range(len(arr_AAoI_ddpg)), arr_AAoI_ddpg)
+    plt.plot(range(len(arr_AAoI_tmp)), arr_AAoI_tmp)
+
+    plt.legend(['Unrestricted', 'Restricted'])
+    print(f'Update Rate of first: {update_rate}')
+    print(f'Update Rate of second: {update_rate_tmp}')
+    
+    # Show the update rate on the plot
+    # plt.text(0, 0, 'Update rate: ' + str(update_rate), fontsize = 12)
     plt.savefig(config.config['output_file'])
     plt.show()
+
+    # Save the configuration to log file
+    # Replace .png to .log
+    saveconfig('log/' + config, config.config['output_file'].replace('.png', '.log'), [update_rate, update_rate_tmp])
 
     print('Update rate:', update_rate)
 
